@@ -1,0 +1,25 @@
+// Minimal settings.gradle used by CI to build universal-api v0.1.0 from source
+// (the author's Maven repo is dead). Trimmed to only the modules effortless's
+// neoforge 1.21.1 target needs: common-api + neoforge-api:v3955 (= 1.21.1),
+// plus third-party (transitive) and build-logic. Drop the trim to build all loaders.
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url = uri('https://maven.fabricmc.net/') }
+        maven { url = uri('https://maven.minecraftforge.net/') }
+        maven { url = 'https://maven.neoforged.net/releases/' }
+        maven { url = uri('https://repo.spongepowered.org/repository/maven-public/') }
+    }
+}
+
+include ':common-api'
+include ':neoforge-api:v3955'
+
+include ':third-party:ftb-chunks-api-v0'
+include ':third-party:ftb-chunks-api-v1'
+include ':third-party:open-pac-api-v0'
+
+includeBuild 'build-logic'
+
+rootProject.name = 'universal-api'

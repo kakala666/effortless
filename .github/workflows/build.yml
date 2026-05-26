@@ -52,8 +52,14 @@ jobs:
       - name: Publish universal-api 0.1.0 to mavenLocal
         working-directory: universal-api
         run: |
+          # v0.1.0 pins NeoGradle 'net.neoforged.gradle.userdev' "7.0.+", which now
+          # resolves to a build requiring Gradle >= 8.13; its wrapper ships 8.11. Bump it.
+          sed -i 's|gradle-8.11-bin.zip|gradle-8.13-bin.zip|' gradle/wrapper/gradle-wrapper.properties
+          # verify-only scope: keep just the modules effortless's neoforge 1.21.1 target
+          # needs (common-api + neoforge-api v3955 = 1.21.1), dropping fabric/quilt/forge.
+          cp ../effortless/.github/ci/universal-api.settings.gradle settings.gradle
           chmod +x ./gradlew
-          ./gradlew publishToMavenLocal --no-daemon --stacktrace
+          ./gradlew :common-api:publishToMavenLocal :neoforge-api:v3955:publishToMavenLocal --no-daemon --stacktrace
 
       # verify-only scope: trim the target matrix to just the crashing target
       # (neoforge 1.21.1) so we confirm the fix compiles without requiring every
