@@ -348,6 +348,11 @@ public final class EffortlessClientManager implements ClientManager {
     }
 
     public void onClientTick(Client client, ClientTick.Phase phase) {
+        if (getRunningClient() == null) {
+            // The platform hands us a valid client every tick; adopt it in case the client-start
+            // event hasn't populated it yet (it can race the first tick during initial load).
+            setRunningClient(client);
+        }
         switch (phase) {
             case START -> {
                 tickCooldown();
@@ -364,6 +369,9 @@ public final class EffortlessClientManager implements ClientManager {
     }
 
     public void onRenderGui(Renderer renderer, float deltaTick) {
+        if (getRunningClient() == null) {
+            return;
+        }
         if (getRunningClient().getPanel() != null && !(getRunningClient().getPanel() instanceof EffortlessStructureScreen)) {
             return;
         }
@@ -372,6 +380,9 @@ public final class EffortlessClientManager implements ClientManager {
     }
 
     public void onRenderEnd(Renderer renderer, float deltaTick) {
+        if (getRunningClient() == null) {
+            return;
+        }
         patternRenderer.render(renderer, deltaTick);
         outlineRenderer.render(renderer, deltaTick);
         operationsRenderer.render(renderer, deltaTick);

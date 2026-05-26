@@ -34,3 +34,9 @@ replay_*.log
 
 # Minecraft
 run/
+
+# Cloned dependency sources (for local analysis only)
+_deps/
+
+# Crash report archives
+错误报告-*.zip
