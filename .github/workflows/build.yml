@@ -46,6 +46,16 @@ jobs:
       - name: Publish dev.huskuraft.universal plugin 0.2.0 to mavenLocal
         working-directory: universal-gradle-plugin
         run: |
+          # Fix the plugin's inverted per-target config guard: `findByName(...) != null`
+          # should be `== null` (configure on first creation). As written, per-target
+          # config — including JarModificationTask.inputFile — only runs from the 2nd
+          # loader onward, so a single-loader (NeoForge-only) build leaves transformJar
+          # unconfigured and fails. The author never hit this (every version had >=3 loaders).
+          sed -i \
+            -e 's/findByName(shadowJarTargetVersionCode) != null/findByName(shadowJarTargetVersionCode) == null/' \
+            -e 's/findByName(transformJarTargetVersionCode) != null/findByName(transformJarTargetVersionCode) == null/' \
+            src/main/groovy/dev/huskuraft/universal/gradle/UniversalPlugin.groovy
+          grep -n 'findByName(.*VersionCode)' src/main/groovy/dev/huskuraft/universal/gradle/UniversalPlugin.groovy
           chmod +x ./gradlew
           ./gradlew publishToMavenLocal --no-daemon --stacktrace
 
@@ -55,15 +65,13 @@ jobs:
           # v0.1.0 pins NeoGradle 'net.neoforged.gradle.userdev' "7.0.+", which now
           # resolves to a build requiring Gradle >= 8.13; its wrapper ships 8.11. Bump it.
           sed -i 's|gradle-8.11-bin.zip|gradle-8.13-bin.zip|' gradle/wrapper/gradle-wrapper.properties
-          # scope to Minecraft 1.21.1 (all four loaders) so the full universal jar can
-          # be built; see .github/ci/universal-api.settings.gradle.
+          # NeoForge-only: build common-api + neoforge-api:v3955 (= 1.21.1).
           cp ../effortless/.github/ci/universal-api.settings.gradle settings.gradle
           chmod +x ./gradlew
-          ./gradlew publishToMavenLocal --no-daemon --stacktrace
+          ./gradlew :common-api:publishToMavenLocal :neoforge-api:v3955:publishToMavenLocal --no-daemon --stacktrace
 
-      # Incremental restore: build the full 1.21.1 universal jar (all four loaders)
-      # first; widen this map to the other Minecraft versions once 1.21.1 is green.
-      - name: Scope target matrix to Minecraft 1.21.1 (all loaders)
+      # NeoForge-only: scope the target matrix to NeoForge 1.21.1.
+      - name: Scope target matrix to NeoForge 1.21.1
         working-directory: effortless
         run: |
           python3 - <<'PY'
@@ -71,14 +79,13 @@ jobs:
           path = 'build.gradle'
           src = open(path).read()
           out = re.sub(r"\[\s*'1\.17\.1'.*?\]\.forEach",
-                       "['1.21.1': ['fabric-api', 'quilt-api', 'forge-api', 'neoforge-api']].forEach",
-                       src, flags=re.S)
+                       "['1.21.1': ['neoforge-api']].forEach", src, flags=re.S)
           assert out != src, "target-matrix scope did not match build.gradle"
           open(path, 'w').write(out)
           PY
           grep -n "universalTarget\|1.21.1" build.gradle
 
-      - name: Build effortless (Minecraft 1.21.1 universal jar)
+      - name: Build effortless (NeoForge 1.21.1 jar)
         working-directory: effortless
         run: |
           chmod +x ./gradlew

@@ -1,7 +1,7 @@
 // Minimal settings.gradle used by CI to build universal-api v0.1.0 from source
-// (the author's Maven repo is dead). Scoped to Minecraft 1.21.1 (data version v3955)
-// across all four loaders, plus common-api, third-party and build-logic — enough to
-// build effortless's full 1.21.1 universal jar. Add other vNNNN modules to widen.
+// (the author's Maven repo is dead). The project is NeoForge-only, so this is scoped
+// to common-api + neoforge-api:v3955 (= Minecraft 1.21.1), plus third-party and
+// build-logic. Add other vNNNN neoforge modules to widen to more versions.
 pluginManagement {
     repositories {
         mavenCentral()
@@ -14,10 +14,6 @@ pluginManagement {
 }
 
 include ':common-api'
-
-include ':fabric-api:v3955'
-include ':quilt-api:v3955'
-include ':forge-api:v3955'
 include ':neoforge-api:v3955'
 
 include ':third-party:ftb-chunks-api-v0'
