@@ -55,16 +55,15 @@ jobs:
           # v0.1.0 pins NeoGradle 'net.neoforged.gradle.userdev' "7.0.+", which now
           # resolves to a build requiring Gradle >= 8.13; its wrapper ships 8.11. Bump it.
           sed -i 's|gradle-8.11-bin.zip|gradle-8.13-bin.zip|' gradle/wrapper/gradle-wrapper.properties
-          # verify-only scope: keep just the modules effortless's neoforge 1.21.1 target
-          # needs (common-api + neoforge-api v3955 = 1.21.1), dropping fabric/quilt/forge.
+          # scope to Minecraft 1.21.1 (all four loaders) so the full universal jar can
+          # be built; see .github/ci/universal-api.settings.gradle.
           cp ../effortless/.github/ci/universal-api.settings.gradle settings.gradle
           chmod +x ./gradlew
-          ./gradlew :common-api:publishToMavenLocal :neoforge-api:v3955:publishToMavenLocal --no-daemon --stacktrace
+          ./gradlew publishToMavenLocal --no-daemon --stacktrace
 
-      # verify-only scope: trim the target matrix to just the crashing target
-      # (neoforge 1.21.1) so we confirm the fix compiles without requiring every
-      # Minecraft version's artifacts. Delete this step to build all targets.
-      - name: Trim target matrix to neoforge 1.21.1 (verify-only)
+      # Incremental restore: build the full 1.21.1 universal jar (all four loaders)
+      # first; widen this map to the other Minecraft versions once 1.21.1 is green.
+      - name: Scope target matrix to Minecraft 1.21.1 (all loaders)
         working-directory: effortless
         run: |
           python3 - <<'PY'
@@ -72,18 +71,25 @@ jobs:
           path = 'build.gradle'
           src = open(path).read()
           out = re.sub(r"\[\s*'1\.17\.1'.*?\]\.forEach",
-                       "['1.21.1': ['neoforge-api']].forEach", src, flags=re.S)
-          assert out != src, "target-matrix trim did not match build.gradle"
+                       "['1.21.1': ['fabric-api', 'quilt-api', 'forge-api', 'neoforge-api']].forEach",
+                       src, flags=re.S)
+          assert out != src, "target-matrix scope did not match build.gradle"
           open(path, 'w').write(out)
           PY
-          grep -n "universalTarget\|neoforge-api" build.gradle
+          grep -n "universalTarget\|1.21.1" build.gradle
 
-      # verify-only scope: compile against the neoforge 1.21.1 classpath to prove the
-      # fix builds. Full `build` additionally runs the universal plugin's jar-transform
-      # step, which trips a Gradle 8.13 task-validation error (JarModificationTask
-      # 'inputFile' unset) unrelated to this code change — that belongs to a full CI restore.
-      - name: Compile effortless (neoforge 1.21.1)
+      - name: Build effortless (Minecraft 1.21.1 universal jar)
         working-directory: effortless
         run: |
           chmod +x ./gradlew
-          ./gradlew compileJava --no-daemon --stacktrace
+          ./gradlew build --no-daemon --stacktrace
+
+      - name: Upload built jars
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: effortless-1.21.1-jars
+          path: |
+            effortless/build/libs/*.jar
+            effortless/build/devlibs/*.jar
+          if-no-files-found: warn
