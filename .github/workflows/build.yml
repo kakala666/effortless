@@ -70,21 +70,6 @@ jobs:
           chmod +x ./gradlew
           ./gradlew :common-api:publishToMavenLocal :neoforge-api:v3955:publishToMavenLocal --no-daemon --stacktrace
 
-      # NeoForge-only: scope the target matrix to NeoForge 1.21.1.
-      - name: Scope target matrix to NeoForge 1.21.1
-        working-directory: effortless
-        run: |
-          python3 - <<'PY'
-          import re
-          path = 'build.gradle'
-          src = open(path).read()
-          out = re.sub(r"\[\s*'1\.17\.1'.*?\]\.forEach",
-                       "['1.21.1': ['neoforge-api']].forEach", src, flags=re.S)
-          assert out != src, "target-matrix scope did not match build.gradle"
-          open(path, 'w').write(out)
-          PY
-          grep -n "universalTarget\|1.21.1" build.gradle
-
       - name: Build effortless (NeoForge 1.21.1 jar)
         working-directory: effortless
         run: |

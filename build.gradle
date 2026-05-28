@@ -18,23 +18,12 @@ dependencies {
 
     implementation 'dev.huskuraft.universal:common-api:0.1.0'
 
-    [
-        '1.17.1': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.18.1': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.18.2': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.19.2': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.19.3': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.19.4': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.20.1': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.20.2': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.20.4': ['fabric-api', 'quilt-api', 'forge-api',],
-        '1.20.6': ['fabric-api', 'quilt-api', 'forge-api', 'neoforge-api'],
-        '1.21.1': ['fabric-api', 'quilt-api', 'forge-api', 'neoforge-api'],
-        '1.21.3': ['fabric-api', 'quilt-api', 'forge-api', 'neoforge-api'],
-    ].forEach { minecraft, loaders ->
-        loaders.forEach { loader ->
-            universalTarget "dev.huskuraft.universal:${loader}:${minecraft}"
-        }
+    // NeoForge-only. Fabric/Quilt dropped (loom drift); Forge dropped (UniversalForgePlugin
+    // uses ForgeGradle 5 `reobfJar`, removed in the FG6 required at 1.21.x).
+    // To add another NeoForge version, also add `:neoforge-api:vNNNN` in
+    // `.github/ci/universal-api.settings.gradle` so universal-api publishes that artifact.
+    ['1.21.1'].each { minecraft ->
+        universalTarget "dev.huskuraft.universal:neoforge-api:${minecraft}"
     }
 
 }
