@@ -1,5 +1,7 @@
 package dev.huskuraft.effortless;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+
 import dev.huskuraft.universal.api.platform.PlatformLoader;
 
 import org.slf4j.Logger;
@@ -16,8 +18,9 @@ import dev.huskuraft.universal.api.text.Text;
 public class Effortless implements Entrance {
 
     public static final String MOD_ID = "effortless";
-    public static final String DEFAULT_CHANNEL = "default";
-    public static final int PROTOCOL_VERSION = 13;
+    // The platform negotiates payload names before decoding build interactions.
+    public static final String DEFAULT_CHANNEL = SableSupport.LOADED ? "sable_build" : "default";
+    public static final int PROTOCOL_VERSION = SableSupport.LOADED ? 14 : 13;
     public static final Logger LOGGER = LoggerFactory.getLogger(Effortless.class.getName());
 
     private final EventRegistry eventRegistry = PlatformLoader.getSingleton(EventRegistry.class);

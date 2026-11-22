@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.renderer.opertaion.children;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.PreviewPoses;
+
 import java.util.List;
 
 import dev.huskuraft.universal.api.renderer.Renderer;
@@ -16,6 +19,14 @@ public final class BatchOperationRenderer implements OperationRenderer {
 
     @Override
     public void render(Renderer renderer, RenderContext renderContext, float deltaTick) {
+        if (SableSupport.LOADED) {
+            PreviewPoses.duringRender(() -> renderChildren(renderer, renderContext, deltaTick));
+        } else {
+            renderChildren(renderer, renderContext, deltaTick);
+        }
+    }
+
+    private void renderChildren(Renderer renderer, RenderContext renderContext, float deltaTick) {
         for (var preview : previews) {
             preview.render(renderer, renderContext, deltaTick);
         }

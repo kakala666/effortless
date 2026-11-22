@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.huskuraft.effortless.compat.sable.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["HitMixin", "ChunkCacheAccessor"],
+  "client": ["CameraMixin", "PreviewLightMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

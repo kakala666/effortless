@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building.operation.block;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.BuildFrames;
+
 import dev.huskuraft.universal.api.core.BlockInteraction;
 import dev.huskuraft.universal.api.core.BlockItem;
 import dev.huskuraft.universal.api.core.BlockState;
@@ -207,7 +210,8 @@ public class BlockStateUpdateOperation extends BlockOperation {
                 if (context.useLegacyBlockPlace()) {
                     placed = blockItem.placeOnBlock(getPlayer(), getInteraction()).consumesAction();
                 } else {
-                    placed = blockItem.setBlockOnly(getWorld(), getPlayer(), getInteraction(), getBlockState());
+                    placed = (!SableSupport.LOADED || BuildFrames.preparePlacement(this))
+                            && blockItem.setBlockOnly(getWorld(), getPlayer(), getInteraction(), getBlockState());
                     if (placed /*&& getWorld().getBlockState(getBlockPosition()).getBlock() == */) {
                         // FIXME: 19/5/24
 //                blockItem.updateBlockStateFromTag(getWorld(), getBlockPosition(), getNewBlockState()(), itemStack);

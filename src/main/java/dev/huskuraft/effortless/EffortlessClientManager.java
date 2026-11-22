@@ -383,6 +383,7 @@ public final class EffortlessClientManager implements ClientManager {
         if (getRunningClient() == null) {
             return;
         }
+        getEntrance().getStructureBuilder().refreshMovingPreview();
         patternRenderer.render(renderer, deltaTick);
         outlineRenderer.render(renderer, deltaTick);
         operationsRenderer.render(renderer, deltaTick);

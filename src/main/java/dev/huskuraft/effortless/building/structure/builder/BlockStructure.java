@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building.structure.builder;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.TraceScope;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -117,7 +120,7 @@ public interface BlockStructure extends Structure {
 
     // TODO: 13/10/23 entity
     static Vector3d getEntityLookAngleGap(Player player) {
-        var look = player.getEyeDirection();
+        var look = SableSupport.LOADED ? TraceScope.look(player) : player.getEyeDirection();
         var x = look.x();
         var y = look.y();
         var z = look.z();
@@ -171,7 +174,7 @@ public interface BlockStructure extends Structure {
 
         Criteria(Player player, Vector3d center, int reach, boolean skipRaytrace) {
             this.look = getEntityLookAngleGap(player);
-            this.eye = player.getEyePosition();
+            this.eye = SableSupport.LOADED ? TraceScope.eye(player) : player.getEyePosition();
             this.center = center;
             this.reach = reach;
             this.skipRaytrace = skipRaytrace;

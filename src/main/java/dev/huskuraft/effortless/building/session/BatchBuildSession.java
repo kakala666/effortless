@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building.session;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.BuildFrames;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -120,7 +123,7 @@ public class BatchBuildSession implements Session {
         }
         operations = operations.flatten().filter(Objects::nonNull).filter(OperationFilter.distinctBlockOperations());
 
-        return operations;
+        return SableSupport.LOADED ? BuildFrames.restrict(world, context, operations) : operations;
     }
 
     public List<BuildInterceptor> getInterceptors() {

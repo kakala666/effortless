@@ -1,5 +1,9 @@
 package dev.huskuraft.effortless.renderer.outliner;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.PreviewCluster;
+import dev.huskuraft.effortless.compat.sable.OutlineFrames;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -53,6 +57,10 @@ public class OutlineRenderer {
         createBoundingBoxOutlineIfMissing(id, boundingBox);
         var outline = getAndRefreshBoundingBox(id);
         outline.prevBB = outline.targetBB = outline.bb = boundingBox;
+        if (SableSupport.LOADED) {
+            OutlineFrames.bind(outline, new BlockPosition((int) Math.floor(boundingBox.minX()),
+                    (int) Math.floor(boundingBox.minY()), (int) Math.floor(boundingBox.minZ())));
+        }
         return outline.getParams();
     }
 
@@ -64,7 +72,18 @@ public class OutlineRenderer {
     }
 
     public Outline.OutlineParams showCluster(Object id, Iterable<BlockPosition> selection) {
-        BlockClusterOutline outline = new BlockClusterOutline(selection);
+        BlockClusterOutline outline;
+        if (selection instanceof java.util.List<BlockPosition> positions) {
+            var existing = outlines.get(id);
+            outline = existing != null && existing.outline instanceof PreviewCluster cached && cached.matches(positions)
+                    ? cached.withFreshStyle() : new PreviewCluster(java.util.List.copyOf(positions));
+        } else {
+            outline = new BlockClusterOutline(selection);
+        }
+        if (SableSupport.LOADED) {
+            var iterator = selection.iterator();
+            if (iterator.hasNext()) OutlineFrames.bind(outline, iterator.next());
+        }
         var entry = new OutlineEntry(outline);
         outlines.put(id, entry);
         return entry.getOutline().getParams();
@@ -144,7 +163,8 @@ public class OutlineRenderer {
                 if (params.alpha < 1 / 8f)
                     return;
             }
-            outline.render(renderer, deltaTick);
+            if (SableSupport.LOADED) OutlineFrames.render(outline, renderer, deltaTick);
+            else outline.render(renderer, deltaTick);
         });
     }
 

@@ -1,22 +1,41 @@
 plugins {
     id 'dev.huskuraft.universal' version '0.2.0'
+    id 'net.neoforged.moddev' version '2.0.144'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge { version = '21.1.248' }
+
+// The unclassified development jar contains only the portable API dependency.
+configurations { embeddedApi }
+tasks.named('shadowJar') { configurations = [project.configurations.embeddedApi] }
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    maven {
+        url = 'https://maven.ryanhcode.dev/releases'
+        content { includeGroup 'dev.ryanhcode.sable-companion' }
+    }
 }
 
 dependencies {
+    compileOnly('maven.modrinth:sable:fg9dTRz9') { transitive = false }
+    compileOnly('dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:1.6.0') { transitive = false }
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
     compileOnly 'com.google.auto.service:auto-service:1.1.1'
 
-    compileOnly 'io.netty:netty-all:4.1.109.Final'
-    compileOnly 'org.slf4j:slf4j-api:2.0.13'
-
     implementation 'dev.huskuraft.universal:common-api:0.1.0'
+    embeddedApi 'dev.huskuraft.universal:common-api:0.1.0'
 
     // NeoForge-only. Fabric/Quilt dropped (loom drift); Forge dropped (UniversalForgePlugin
     // uses ForgeGradle 5 `reobfJar`, removed in the FG6 required at 1.21.x).
@@ -30,4 +49,29 @@ dependencies {
 
 universal {
 
+}
+
+// Universal obtains the loader descriptor from its platform dependency.
+// Register the optional mixins in the generated NeoForge jar.
+tasks.withType(dev.huskuraft.universal.gradle.task.JarModificationTask).configureEach {
+    modification(new dev.huskuraft.universal.gradle.task.modification.PlainTextModification() {
+        boolean appliesTo(java.util.jar.JarEntry entry) {
+            return entry.name == 'META-INF/neoforge.mods.toml'
+        }
+        protected String modifyText(String descriptor) {
+            if (descriptor.contains('config="effortless.sable.mixins.json"')) return descriptor
+            return descriptor + '''
+
+[[mixins]]
+config="effortless.sable.mixins.json"
+requiredMods=["sable"]
+
+[[dependencies.effortless]]
+modId="effortless_sable_compat"
+type="incompatible"
+versionRange="[0,)"
+reason="Effortless includes the Sable integration."
+'''
+        }
+    })
 }

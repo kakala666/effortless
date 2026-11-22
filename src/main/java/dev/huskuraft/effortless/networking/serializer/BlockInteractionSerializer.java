@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.networking.serializer;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.Frame;
+
 import dev.huskuraft.universal.api.core.BlockInteraction;
 import dev.huskuraft.universal.api.core.Direction;
 import dev.huskuraft.universal.api.networking.NetByteBuf;
@@ -9,13 +12,15 @@ public class BlockInteractionSerializer implements NetByteBufSerializer<BlockInt
 
     @Override
     public BlockInteraction read(NetByteBuf byteBuf) {
-        return new BlockInteraction(
+        var hit = new BlockInteraction(
                 byteBuf.read(new Vector3dSerializer()),
                 byteBuf.readEnum(Direction.class),
                 byteBuf.read(new BlockPositionSerializer()),
                 byteBuf.readBoolean(),
                 byteBuf.readBoolean()
         );
+        if (SableSupport.LOADED) Frame.read(byteBuf, hit);
+        return hit;
     }
 
     @Override
@@ -25,6 +30,7 @@ public class BlockInteractionSerializer implements NetByteBufSerializer<BlockInt
         byteBuf.write(blockInteraction.getBlockPosition(), new BlockPositionSerializer());
         byteBuf.writeBoolean(blockInteraction.isInside());
         byteBuf.writeBoolean(blockInteraction.isMiss());
+        if (SableSupport.LOADED) Frame.write(byteBuf, blockInteraction);
     }
 
 }

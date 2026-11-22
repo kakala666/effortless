@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'net.neoforged.moddev' version '2.0.144'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+def plain = providers.gradleProperty('noSable').isPresent()
+sourceSets.main.java.srcDir(plain ? 'src/plain/java' : 'src/sable/java')
+
+repositories {
+    maven { url = 'https://api.modrinth.com/maven'; content { includeGroup 'maven.modrinth' } }
+    maven { url = 'https://maven.ryanhcode.dev/releases'; content { includeGroup 'dev.ryanhcode.sable-companion' } }
+}
+
+def modProperties = new Properties()
+file('../gradle.properties').withInputStream { modProperties.load(it) }
+dependencies {
+    implementation files("../build/libs/effortless-1.21.1-${modProperties.mod_version}.jar")
+    if (!plain) {
+        implementation('maven.modrinth:sable:fg9dTRz9') { transitive = false }
+        compileOnly('dev.ryanhcode.sable-companion:sable-companion-common-1.21.1:1.6.0') { transitive = false }
+    }
+}
+
+neoForge {
+    version = '21.1.248'
+    mods { effortless_sable_test { sourceSet sourceSets.main } }
+    runs {
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = file(plain ? 'build/run-plain' : 'build/run-sable')
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'effortless_sable_test'
+        }
+    }
+}

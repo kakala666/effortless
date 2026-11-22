@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building.structure.builder.standard;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.TraceScope;
+
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -27,7 +30,9 @@ public record Single() implements BlockStructure {
         var isHoldingEmptyBucket = player.getItemStack(InteractionHand.MAIN).getItem() instanceof BucketItem bucketItem && bucketItem.isEmpty();
         var isHoldingNonBlockItem = player.getItemStack(InteractionHand.MAIN).getItem() instanceof BucketItem bucketItem && !bucketItem.isEmpty();
 
-        var interaction = player.raytrace(maxReachDistance, 0, isHoldingEmptyBucket);
+        var interaction = SableSupport.LOADED
+                ? TraceScope.pick(player, maxReachDistance, 0, isHoldingEmptyBucket)
+                : player.raytrace(maxReachDistance, 0, isHoldingEmptyBucket);
 
         var startBlockPosition = interaction.getBlockPosition();
 

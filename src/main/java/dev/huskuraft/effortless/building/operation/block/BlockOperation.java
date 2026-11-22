@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building.operation.block;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.BuildFrames;
+
 import dev.huskuraft.universal.api.core.BlockEntity;
 import dev.huskuraft.universal.api.core.BlockInteraction;
 import dev.huskuraft.universal.api.core.BlockPosition;
@@ -112,6 +115,7 @@ public abstract class BlockOperation implements Operation {
     }
 
     public final boolean isInBorderBound() {
+        if (SableSupport.LOADED) return BuildFrames.withinBorder(this);
         return getWorld().getWorldBorder().isInBounds(getBlockPosition());
     }
 

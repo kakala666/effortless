@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless.building;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.TraceScope;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -254,6 +257,7 @@ public record Context(
     // for build mode only
     @Nullable
     public BlockInteraction trace(Player player) {
+        if (SableSupport.LOADED) return TraceScope.trace(structure(), player, this);
         return structure().trace(player, this);
     }
 

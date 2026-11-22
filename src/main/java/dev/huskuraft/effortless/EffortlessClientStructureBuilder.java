@@ -1,5 +1,8 @@
 package dev.huskuraft.effortless;
 
+import dev.huskuraft.effortless.compat.sable.ClientPreviewPick;
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -69,6 +72,8 @@ import dev.huskuraft.effortless.session.config.SessionConfig;
 public final class EffortlessClientStructureBuilder extends StructureBuilder {
 
     private final EffortlessClient entrance;
+    private Context previewBase;
+    private BlockInteraction displayedHit;
 
     private final Map<UUID, Context> contexts = new HashMap<>();
     private final Map<UUID, Context> historyContexts = new HashMap<>();
@@ -246,6 +251,11 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
 
     @Override
     public Context getContextTraced(Player player) {
+        var context = getTraceBase(player);
+        return context.withNextInteraction(context.trace(player));
+    }
+
+    private Context getTraceBase(Player player) {
         var context = getContext(player).finalize(player, BuildStage.INTERACT);
         if (context.isInteractionEmpty()) {
             if (context.clipboard().enabled()) {
@@ -264,7 +274,7 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
                 }
             }
         }
-        return context.withNextInteraction(context.trace(player));
+        return context;
     }
 
     @Override
@@ -274,6 +284,7 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
 
     @Override
     public boolean setContext(Player player, Context context) {
+        previewBase = null;
         contexts.put(player.getId(), context);
         return true;
     }
@@ -531,6 +542,7 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
         if (phase == ClientTick.Phase.END) {
             return;
         }
+        previewBase = null;
         if (getEntrance().getClient() == null || getPlayer() == null) {
             resetAll();
             return;
@@ -571,8 +583,10 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
 
         reloadContext(player);
 
-        var context1 = getContextTraced(player);
-        var context = context1.withBuildType(BuildType.PREVIEW);
+        var base = getTraceBase(player);
+        displayedHit = base.trace(player);
+        var context = base.withNextInteraction(displayedHit).withBuildType(BuildType.PREVIEW);
+        if (SableSupport.LOADED) previewBase = base;
 
         if (context.getVolume() > getEntrance().getConfigStorage().get().renderConfig().maxRenderVolume()) {
             showContext(player.getId(), 0, player, context, null);
@@ -599,6 +613,18 @@ public final class EffortlessClientStructureBuilder extends StructureBuilder {
         }
 
         getEntrance().getChannel().sendPacket(new PlayerBuildPacket(getPlayer().getId(), context));
+    }
+
+    void refreshMovingPreview() {
+        if (previewBase == null || !ClientPreviewPick.needsUpdate(previewBase, displayedHit)) return;
+        var player = getPlayer();
+        var hit = ClientPreviewPick.trace(player, previewBase);
+        if (ClientPreviewPick.sameCell(displayedHit, hit)) return;
+        var context = previewBase.withNextInteraction(hit).withBuildType(BuildType.PREVIEW);
+        var limit = getEntrance().getConfigStorage().get().renderConfig().maxRenderVolume();
+        var result = context.getVolume() <= limit ? new BatchBuildSession(getEntrance(), player, context).commit() : null;
+        showContext(player.getId(), 0, player, context, result);
+        displayedHit = hit;
     }
 
     private void reloadContext(Player player) {

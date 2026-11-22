@@ -1,5 +1,9 @@
 package dev.huskuraft.effortless.renderer.opertaion.children;
 
+import dev.huskuraft.effortless.compat.sable.SableSupport;
+import dev.huskuraft.effortless.compat.sable.PreviewPoses;
+import dev.huskuraft.effortless.compat.sable.PreviewTransform;
+
 import java.awt.*;
 import java.util.List;
 
@@ -96,7 +100,8 @@ public class BlockOperationRenderer implements OperationRenderer {
 
         var operation = getResult().getOperation();
 
-        if (renderContext.maxRenderVolume() < operation.getContext().getVolume()) {
+        int volume = SableSupport.LOADED ? PreviewPoses.volume(operation.getContext()) : operation.getContext().getVolume();
+        if (renderContext.maxRenderVolume() < volume) {
             return;
         }
 
@@ -104,7 +109,7 @@ public class BlockOperationRenderer implements OperationRenderer {
         var player = operation.getPlayer();
         var blockPosition = operation.getBlockPosition();
         var blockState = getResult().getBlockStateForRenderer();
-        var blockEntity = getResult().getBlockEntityForRenderer();
+
         if (world == null || player == null) {
             return;
         }
@@ -112,7 +117,9 @@ public class BlockOperationRenderer implements OperationRenderer {
         var scale = 129f / 128f;
         var camera = renderer.getCamera().position();
 
-        var distance = player.getPosition().distance(blockPosition.toVector3d());
+        var transform = SableSupport.LOADED ? PreviewTransform.forBlock(operation) : null;
+        var position = transform == null ? blockPosition.toVector3d() : transform.position();
+        var distance = player.getPosition().distance(position);
         if (distance > renderContext.maxRenderDistance()) {
             return;
         }
@@ -124,7 +131,9 @@ public class BlockOperationRenderer implements OperationRenderer {
         }
 
         renderer.pushPose();
-        renderer.translate(blockPosition.toVector3d().sub(camera));
+        renderer.translate(position.sub(camera));
+        if (transform != null) transform.apply(renderer);
+        var blockEntity = getResult().getBlockEntityForRenderer();
         if (blockEntity != null) {
             renderer.renderBlockEntity(BlockRenderLayers.block(color.getRGB()), world, blockPosition, blockEntity);
         }
